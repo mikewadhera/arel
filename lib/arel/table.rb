@@ -3,7 +3,7 @@ module Arel
     include Arel::Crud
     include Arel::FactoryMethods
 
-    @engine = nil
+    @engine = Arel::Sql::Engine.new
     class << self; attr_accessor :engine; end
 
     attr_accessor :name, :engine, :aliases, :table_alias

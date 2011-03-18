@@ -4,6 +4,7 @@ require 'arel/factory_methods'
 require 'arel/expressions'
 require 'arel/predications'
 require 'arel/math'
+require 'arel/sql/engine'
 require 'arel/table'
 require 'arel/attributes'
 require 'arel/compatibility/wheres'
@@ -26,7 +27,6 @@ require 'arel/nodes'
 
 #### these are deprecated
 require 'arel/deprecated'
-require 'arel/sql/engine'
 require 'arel/sql_literal'
 ####
 
