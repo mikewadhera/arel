@@ -38,8 +38,14 @@ module Arel
         end
 
         it 'should use the column to quote' do
+          engine = Arel::Sql::Engine.new
+          class << engine
+            def quote(value, name)
+              value.to_i
+            end
+          end
           table = Table.new(:users)
-          sql = @visitor.accept Nodes::Equality.new(table[:id], '1-fooo')
+          sql = ToSql.new(engine).accept Nodes::Equality.new(table[:id], '1-fooo')
           sql.must_be_like %{ "users"."id" = 1 }
         end
       end
@@ -187,9 +193,7 @@ module Arel
           end
           in_node = Nodes::In.new @attr, %w{ a b c }
           visitor = visitor.new(Table.engine)
-          visitor.expected = Table.engine.connection.columns(:users).find { |x|
-            x.name == 'name'
-          }
+          visitor.expected = :name
           visitor.accept(in_node).must_equal %("users"."name" IN ('a', 'b', 'c'))
         end
       end
@@ -275,9 +279,7 @@ module Arel
           end
           in_node = Nodes::NotIn.new @attr, %w{ a b c }
           visitor = visitor.new(Table.engine)
-          visitor.expected = Table.engine.connection.columns(:users).find { |x|
-            x.name == 'name'
-          }
+          visitor.expected = :name
           visitor.accept(in_node).must_equal %("users"."name" NOT IN ('a', 'b', 'c'))
         end
       end
@@ -293,8 +295,14 @@ module Arel
 
       describe 'TableAlias' do
         it "should use the underlying table for checking columns" do
+          engine = Arel::Sql::Engine.new
+          class << engine
+            def quote(value, name)
+              value.to_i
+            end
+          end
           test = Table.new(:users).alias('zomgusers')[:id].eq '3'
-          @visitor.accept(test).must_be_like %{
+          ToSql.new(engine).accept(test).must_be_like %{
             "zomgusers"."id" = 3
           }
         end

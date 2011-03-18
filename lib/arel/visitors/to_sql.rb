@@ -6,20 +6,14 @@ module Arel
     class ToSql < Arel::Visitors::Visitor
       def initialize engine
         @engine         = engine
-        @connection     = nil
-        @pool           = nil
         @last_column    = nil
         @quoted_tables  = {}
         @quoted_columns = {}
       end
-
+      
       def accept object
         @last_column = nil
-        @pool        = @engine.connection_pool
-        @pool.with_connection do |conn|
-          @connection = conn
-          super
-        end
+        super
       end
 
       private
@@ -83,25 +77,12 @@ key on UpdateManager using UpdateManager#key=
       end
 
       def table_exists? name
-        @pool.table_exists? name
-      end
-
-      def column_for attr
-        name    = attr.name.to_s
-        table   = attr.relation.table_name
-
-        return nil unless table_exists? table
-
-        column_cache[table][name]
-      end
-
-      def column_cache
-        @pool.columns_hash
+        @engine.table_exists? name
       end
 
       def visit_Arel_Nodes_Values o
         "VALUES (#{o.expressions.zip(o.columns).map { |value, attr|
-          quote(value, attr && column_for(attr))
+          quote(value, attr && attr.name)
         }.join ', '})"
       end
 
@@ -305,7 +286,7 @@ key on UpdateManager using UpdateManager#key=
       end
 
       def visit_Arel_Nodes_Assignment o
-        right = quote(o.right, column_for(o.left))
+        right = quote(o.right, o.left.name)
         "#{visit o.left} = #{right}"
       end
 
@@ -338,7 +319,7 @@ key on UpdateManager using UpdateManager#key=
       end
 
       def visit_Arel_Attributes_Attribute o
-        @last_column = column_for o
+        @last_column = o.name
         join_name = o.relation.table_alias || o.relation.name
         "#{quote_table_name join_name}.#{quote_column_name o.name}"
       end
@@ -386,16 +367,16 @@ key on UpdateManager using UpdateManager#key=
         o.empty? ? 'NULL' : o.map { |x| visit x }.join(', ')
       end
 
-      def quote value, column = nil
-        @connection.quote value, column
+      def quote value, name
+        @engine.quote value, name
       end
 
       def quote_table_name name
-        @quoted_tables[name] ||= @connection.quote_table_name(name)
+        @quoted_tables[name] ||= @engine.quote_table_name(name)
       end
 
       def quote_column_name name
-        @quoted_columns[name] ||= Arel::Nodes::SqlLiteral === name ? name : @connection.quote_column_name(name)
+        @quoted_columns[name] ||= Arel::Nodes::SqlLiteral === name ? name : @engine.quote_column_name(name)
       end
     end
   end

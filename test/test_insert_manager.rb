@@ -34,10 +34,11 @@ module Arel
 
         time = Time.now
         attribute = table[:created_at]
+        column = "created_at"
 
         manager.insert [[attribute, time]]
         manager.to_sql.must_be_like %{
-          INSERT INTO "users" ("created_at") VALUES (#{Table.engine.connection.quote time})
+          INSERT INTO "users" ("created_at") VALUES (#{Table.engine.quote time, column})
         }
       end
 

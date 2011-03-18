@@ -25,9 +25,7 @@ module Arel
     }
 
     ENGINE_VISITORS = Hash.new do |hash, engine|
-      pool         = engine.connection_pool
-      adapter      = pool.spec.config[:adapter]
-      hash[engine] = (VISITORS[adapter] || Visitors::ToSql).new(engine)
+      hash[engine] = (VISITORS[engine.adapter] || Visitors::ToSql).new(engine)
     end
 
     def self.visitor_for engine

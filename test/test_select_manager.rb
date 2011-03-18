@@ -1,45 +1,12 @@
 require 'helper'
 
 module Arel
-  class EngineProxy
+  class EngineProxy < Sql::Engine
     attr_reader :executed
-    attr_reader :connection_pool
-    attr_reader :spec
-    attr_reader :config
 
     def initialize engine
       @engine = engine
       @executed = []
-      @connection_pool = self
-      @spec = self
-      @config = { :adapter => 'sqlite3' }
-    end
-
-    def with_connection
-      yield self
-    end
-
-    def connection
-      self
-    end
-
-    def quote_table_name thing; @engine.connection.quote_table_name thing end
-    def quote_column_name thing; @engine.connection.quote_column_name thing end
-    def quote thing, column; @engine.connection.quote thing, column end
-    def columns table, message = nil
-      @engine.connection.columns table, message
-    end
-
-    def columns_hash
-      @engine.connection.columns_hash
-    end
-
-    def table_exists? name
-      @engine.connection.table_exists? name
-    end
-
-    def tables
-      @engine.connection.tables
     end
 
     def execute sql, name = nil, *args
@@ -364,20 +331,6 @@ module Arel
         manager = Arel::SelectManager.new Table.engine
         manager.take 10
         manager.taken.must_equal 10
-      end
-    end
-
-    describe 'insert' do
-      it 'uses the select FROM' do
-        engine  = EngineProxy.new Table.engine
-        table   = Table.new :users
-        manager = Arel::SelectManager.new engine
-        manager.from table
-        manager.insert 'VALUES(NULL)'
-
-        engine.executed.last.must_be_like %{
-          INSERT INTO "users" VALUES(NULL)
-        }
       end
     end
 
