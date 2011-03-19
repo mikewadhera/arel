@@ -15,7 +15,7 @@ module Arel
       end
       
       def quote_table_name name
-        "\'#{name.to_s}\'"
+        name.to_s
       end
 
       def quote_column_name name
